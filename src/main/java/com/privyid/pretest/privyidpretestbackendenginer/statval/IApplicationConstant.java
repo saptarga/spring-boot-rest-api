@@ -10,6 +10,7 @@ public interface IApplicationConstant {
 
         interface UserBalance {
             String DEPOSIT_MONEY = "deposit-money";
+            String TRANSFER_MONEY = "transfer-money";
         }
     }
 }

@@ -1,7 +1,9 @@
 package com.privyid.pretest.privyidpretestbackendenginer.endpoint.impl;
 
 import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestDepositMoneyDTO;
+import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseDepositMoneyDTO;
+import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.endpoint.IUserBalanceEndPoint;
 import com.privyid.pretest.privyidpretestbackendenginer.entity.UserBalance;
 import com.privyid.pretest.privyidpretestbackendenginer.service.IUserBalanceService;
@@ -30,5 +32,10 @@ public class UserBalanceEndPointImpl implements IUserBalanceEndPoint {
                 .balance(result.getBalanceAchieve())
                 .depositMoney(requestDepositMoneyDTO.getAmount())
                 .activity(EActivity.DEPOSIT_MONEY).build());
+    }
+
+    @Override
+    public ResponseEntity<ResponseTransferMoneyDTO> transferMoney(@Valid RequestTransferMoneyDTO requestTransferMoneyDTO, HttpServletRequest request) throws Exception {
+        return ResponseEntity.ok(userBalanceService.transferMoney(requestTransferMoneyDTO,  request));
     }
 }
