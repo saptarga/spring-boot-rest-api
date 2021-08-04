@@ -1,0 +1,52 @@
+# Login User
+# @name generateToken
+POST /v1/auth/login HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Content-Length: 62
+
+{
+    "username": "sapta_arga",
+    "password": "123456789"
+}
+
+###
+@authToken = Bearer {{generateToken.response.body.token}}
+
+###
+
+# Menambahkan Saldo Untuk User
+POST /v1/user-balance/deposit-money HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Content-Length: 93
+Authorization: {{authToken}}
+
+{
+    "amount": 1000000,
+    "bankCode": "3322030300020244"
+}
+
+###
+
+# Transfer Uang Antar User
+POST /v1/user-balance/transfer-money HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Content-Length: 93
+Authorization: {{authToken}}
+
+{
+    "transferTo" : "dwi_asih",
+    "amount": 1000000,
+    "bankCodeTo": "3322030300020223",
+    "bankCodeFrom" : "3322030300020244"
+}
+
+###
+
+# Logout User
+POST /v1/auth/logout HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+Authorization: {{authToken}}
