@@ -18,17 +18,24 @@ public class UserServiceImpl implements UserDetailsService, IUserService {
 
     @Override
     public void updateStatusLoggedOut(String username) {
-
+        User user =  iUserDAO.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+        user.setStatusLogin(false);
+        iUserDAO.save(user);
     }
 
     @Override
     public UserDetails loadUserByUsernameAndStatusLoginTrue(String username) {
-        return null;
+        return iUserDAO.findByUsernameAndStatusLoginTrue(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
     }
 
     @Override
     public void updateStatusLogged(String username) {
-
+        User user =  iUserDAO.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+        user.setStatusLogin(true);
+        iUserDAO.save(user);
     }
 
     @Override

@@ -1,50 +1,61 @@
 package com.privyid.pretest.privyidpretestbackendenginer.security;
 
-import com.privyid.pretest.privyidpretestbackendenginer.service.IUserService;
+import com.privyid.pretest.privyidpretestbackendenginer.security.jwt.AuthEntryPointJwt;
+import com.privyid.pretest.privyidpretestbackendenginer.security.jwt.AuthTokenFilter;
 import com.privyid.pretest.privyidpretestbackendenginer.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserServiceImpl userService;
+    private final AuthEntryPointJwt unauthorizedHandler;
 
-    @Override
-    protected void configure(HttpSecurity httpSecurity) throws Exception {
-        httpSecurity.csrf().disable()
-                .formLogin().disable()
-                .logout().disable()
-                .authorizeRequests().antMatchers("/user/register").permitAll()
-                .anyRequest().authenticated()
-                .and().httpBasic();
-
+    @Bean
+    public AuthTokenFilter authenticationJwtTokenFilter() {
+        return new AuthTokenFilter();
     }
 
-    @Autowired
-    public void config(AuthenticationManagerBuilder authentication)
-            throws Exception
-    {
-        authentication.authenticationProvider(daoAuthenticationProvider());
+    @Override
+    public void configure(AuthenticationManagerBuilder authenticationManagerBuilder) throws Exception {
+        authenticationManagerBuilder.userDetailsService(userService).passwordEncoder(passwordEncoder());
     }
 
     @Bean
-    public DaoAuthenticationProvider daoAuthenticationProvider(){
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setPasswordEncoder(bCryptPasswordEncoder);
-        provider.setUserDetailsService(userService);
-        return provider;
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.cors().and().csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+                .authorizeRequests().antMatchers("/v1/auth/**").permitAll()
+                .anyRequest().authenticated();
+
+        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 }
