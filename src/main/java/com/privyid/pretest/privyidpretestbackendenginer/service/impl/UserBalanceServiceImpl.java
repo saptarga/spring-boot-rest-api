@@ -17,7 +17,6 @@ import com.privyid.pretest.privyidpretestbackendenginer.service.IUserBalanceServ
 import com.privyid.pretest.privyidpretestbackendenginer.statval.EActivity;
 import com.privyid.pretest.privyidpretestbackendenginer.statval.EType;
 import lombok.RequiredArgsConstructor;
-import lombok.Synchronized;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +59,11 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
     }
 
     @Override
-    public ResponseTransferMoneyDTO transferMoney(RequestTransferMoneyDTO requestTransferMoneyDTO, HttpServletRequest request) throws Exception {
-        UserBalance userBalanceFrom = iUserBalanceDAO.findByUser_Username(requestTransferMoneyDTO.getTransferFrom());
+    public ResponseTransferMoneyDTO transferMoney(RequestTransferMoneyDTO requestTransferMoneyDTO, String username, HttpServletRequest request) throws Exception {
+        UserBalance userBalanceFrom = iUserBalanceDAO.findByUser_Username(username);
         if (Objects.isNull(userBalanceFrom)) throw new ServiceException("User balance from not found");
+
+        if (username.equals(requestTransferMoneyDTO.getTransferTo())) throw new ServiceException("Bad request, User transfer is wrong");
 
         UserBalance userBalanceTo = iUserBalanceDAO.findByUser_Username(requestTransferMoneyDTO.getTransferTo());
         if (Objects.isNull(userBalanceTo)) throw new ServiceException("User balance to not found");
@@ -75,85 +76,31 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
 
         if (requestTransferMoneyDTO.getAmount() > userBalanceFrom.getBalanceAchieve()) throw new ServiceException("Bank balance is not enough");
 
-        transferMoney(request, requestTransferMoneyDTO, userBalanceFrom, userBalanceTo, bankBalanceFrom, bankBalanceTo);
+        prosesTransaction(RequestProsesTransactionDTO.builder()
+                .userBalance(userBalanceFrom)
+                .bankBalance(bankBalanceFrom)
+                .type(EType.CREDIT)
+                .httpServletRequest(request)
+                .author(username)
+                .amount(requestTransferMoneyDTO.getAmount())
+                .activity(EActivity.TRANSFER_MONEY)
+                .build());
+
+        prosesTransaction(RequestProsesTransactionDTO.builder()
+                .userBalance(userBalanceTo)
+                .bankBalance(bankBalanceTo)
+                .type(EType.DEBIT)
+                .httpServletRequest(request)
+                .author(userBalanceTo.getUser().getUsername())
+                .amount(requestTransferMoneyDTO.getAmount())
+                .activity(EActivity.TRANSFER_MONEY)
+                .build());
 
         return ResponseTransferMoneyDTO.builder()
                 .transferFrom(userBalanceFrom.getUser().getUsername())
                 .transferTo(userBalanceTo.getUser().getUsername())
                 .amount(requestTransferMoneyDTO.getAmount())
                 .build();
-    }
-
-    private synchronized void transferMoney(HttpServletRequest request, RequestTransferMoneyDTO requestTransferMoneyDTO, UserBalance userBalanceFrom, UserBalance userBalanceTo, BankBalance bankBalanceFrom, BankBalance bankBalanceTo){
-        int amountUserBalanceFrom = userBalanceFrom.getBalanceAchieve() - requestTransferMoneyDTO.getAmount();
-        int amountUserBalanceTo = userBalanceTo.getBalanceAchieve() + requestTransferMoneyDTO.getAmount();
-
-        UserBalanceHistory userBalanceHistoryFrom = UserBalanceHistory.builder()
-                .userBalance(userBalanceFrom)
-                .balanceBefore(userBalanceFrom.getBalanceAchieve())
-                .balanceAfter(amountUserBalanceFrom)
-                .activity(EActivity.TRANSFER_MONEY)
-                .type(EType.CREDIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(userBalanceFrom.getUser().getUsername())
-                .build();
-        iUserBalanceHistoryDAO.save(userBalanceHistoryFrom);
-
-        userBalanceFrom.setBalanceAchieve(amountUserBalanceFrom);
-        userBalanceFrom.setBalance(String.valueOf(amountUserBalanceFrom));
-        iUserBalanceDAO.save(userBalanceFrom);
-
-        UserBalanceHistory userBalanceHistoryTo = UserBalanceHistory.builder()
-                .userBalance(userBalanceTo)
-                .balanceBefore(userBalanceTo.getBalanceAchieve())
-                .balanceAfter(amountUserBalanceTo)
-                .activity(EActivity.TRANSFER_MONEY)
-                .type(EType.DEBIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(userBalanceTo.getUser().getUsername())
-                .build();
-        iUserBalanceHistoryDAO.save(userBalanceHistoryTo);
-
-        userBalanceTo.setBalanceAchieve(amountUserBalanceTo);
-        userBalanceTo.setBalance(String.valueOf(amountUserBalanceTo));
-        iUserBalanceDAO.save(userBalanceTo);
-
-        int amountBankBalanceFrom = bankBalanceFrom.getBalanceAchieve() - requestTransferMoneyDTO.getAmount();
-        int amountBankBalanceTo = bankBalanceTo.getBalanceAchieve() + requestTransferMoneyDTO.getAmount();
-
-        BankBalanceHistory bankBalanceHistoryFrom = BankBalanceHistory.builder()
-                .bankBalance(bankBalanceFrom)
-                .balanceBefore(userBalanceFrom.getBalanceAchieve())
-                .balanceAfter(amountBankBalanceFrom)
-                .activity(EActivity.TRANSFER_MONEY)
-                .type(EType.CREDIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(userBalanceFrom.getUser().getUsername())
-                .build();
-        iBankBalanceHistoryDAO.save(bankBalanceHistoryFrom);
-
-        bankBalanceFrom.setBalanceAchieve(amountBankBalanceFrom);
-        bankBalanceFrom.setBalance(amountBankBalanceFrom);
-        iBankBalanceDAO.save(bankBalanceFrom);
-
-        BankBalanceHistory bankBalanceHistoryTo = BankBalanceHistory.builder()
-                .bankBalance(bankBalanceTo)
-                .balanceBefore(userBalanceTo.getBalanceAchieve())
-                .balanceAfter(amountBankBalanceTo)
-                .activity(EActivity.TRANSFER_MONEY)
-                .type(EType.DEBIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(userBalanceTo.getUser().getUsername())
-                .build();
-        iBankBalanceHistoryDAO.save(bankBalanceHistoryTo);
-
-        bankBalanceTo.setBalanceAchieve(amountBankBalanceTo);
-        bankBalanceTo.setBalance(amountBankBalanceTo);
-        iBankBalanceDAO.save(bankBalanceTo);
     }
 
     private synchronized UserBalance prosesTransaction(RequestProsesTransactionDTO request){

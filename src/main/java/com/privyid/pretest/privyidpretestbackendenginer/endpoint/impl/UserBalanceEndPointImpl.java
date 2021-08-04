@@ -41,7 +41,8 @@ public class UserBalanceEndPointImpl implements IUserBalanceEndPoint {
 
     @Override
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ResponseTransferMoneyDTO> transferMoney(@Valid RequestTransferMoneyDTO requestTransferMoneyDTO, HttpServletRequest request) throws Exception {
-        return ResponseEntity.ok(userBalanceService.transferMoney(requestTransferMoneyDTO,  request));
+    public ResponseEntity<ResponseTransferMoneyDTO> transferMoney(@Valid RequestTransferMoneyDTO requestTransferMoneyDTO, Authentication authentication, HttpServletRequest request) throws Exception {
+        User userDetails = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(userBalanceService.transferMoney(requestTransferMoneyDTO, userDetails.getUsername(), request));
     }
 }

@@ -13,10 +13,6 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class RequestTransferMoneyDTO {
 
-    // TODO: Remove username if we have added security, and we can get username from principal
-    @NotNull
-    private String transferFrom;
-
     @NotNull
     private String transferTo;
 

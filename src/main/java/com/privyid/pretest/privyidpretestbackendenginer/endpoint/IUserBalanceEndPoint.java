@@ -24,6 +24,7 @@ public interface IUserBalanceEndPoint {
 
     @PostMapping(IApplicationConstant.Path.UserBalance.TRANSFER_MONEY)
     ResponseEntity<ResponseTransferMoneyDTO> transferMoney(@Valid @RequestBody RequestTransferMoneyDTO requestDepositMoneyDTO,
+                                                           Authentication authentication,
                                                            HttpServletRequest request) throws Exception;
 
 }
