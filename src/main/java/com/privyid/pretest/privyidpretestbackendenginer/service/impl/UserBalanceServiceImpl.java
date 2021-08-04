@@ -1,6 +1,7 @@
 package com.privyid.pretest.privyidpretestbackendenginer.service.impl;
 
 import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestDepositMoneyDTO;
+import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestProsesTransactionDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.entity.BankBalance;
@@ -47,7 +48,15 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
             throw new ServiceException("User balance not found");
         }
 
-        return depositMoney(requestDepositMoneyDTO, username, userBalance, bankBalance, request);
+        return prosesTransaction(RequestProsesTransactionDTO.builder()
+                .userBalance(userBalance)
+                .bankBalance(bankBalance)
+                .type(EType.DEBIT)
+                .httpServletRequest(request)
+                .author(username)
+                .amount(requestDepositMoneyDTO.getAmount())
+                .activity(EActivity.DEPOSIT_MONEY)
+                .build());
     }
 
     @Override
@@ -147,17 +156,29 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
         iBankBalanceDAO.save(bankBalanceTo);
     }
 
-    private synchronized UserBalance depositMoney(RequestDepositMoneyDTO requestDepositMoneyDTO, String username, UserBalance userBalance, BankBalance bankBalance, HttpServletRequest request){
-        int amountUserBalance = userBalance.getBalanceAchieve() + requestDepositMoneyDTO.getAmount();
+    private synchronized UserBalance prosesTransaction(RequestProsesTransactionDTO request){
+        int amountUserBalance;
+        int amountBankBalance;
+        UserBalance userBalance = request.getUserBalance();
+        BankBalance bankBalance = request.getBankBalance();
+
+        if (request.getType().equals(EType.DEBIT)) {
+            amountUserBalance = request.getUserBalance().getBalanceAchieve() + request.getAmount();
+            amountBankBalance = bankBalance.getBalanceAchieve() + request.getAmount();
+        } else {
+            amountUserBalance = request.getUserBalance().getBalanceAchieve() - request.getAmount();
+            amountBankBalance = bankBalance.getBalanceAchieve() - request.getAmount();
+        }
+
         UserBalanceHistory userBalanceHistory = UserBalanceHistory.builder()
                 .userBalance(userBalance)
                 .balanceBefore(userBalance.getBalanceAchieve())
                 .balanceAfter(amountUserBalance)
-                .activity(EActivity.DEPOSIT_MONEY)
-                .type(EType.DEBIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(username)
+                .activity(request.getActivity())
+                .type(request.getType())
+                .ip(request.getHttpServletRequest().getLocalAddr())
+                .userAgent(request.getHttpServletRequest().getHeader("user-agent"))
+                .author(request.getAuthor())
                 .build();
         iUserBalanceHistoryDAO.save(userBalanceHistory);
 
@@ -165,16 +186,15 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
         userBalance.setBalance(String.valueOf(amountUserBalance));
         iUserBalanceDAO.save(userBalance);
 
-        int amountBankBalance = bankBalance.getBalanceAchieve() + requestDepositMoneyDTO.getAmount();
         BankBalanceHistory bankBalanceHistory = BankBalanceHistory.builder()
                 .bankBalance(bankBalance)
                 .balanceBefore(userBalance.getBalanceAchieve())
                 .balanceAfter(amountBankBalance)
-                .activity(EActivity.DEPOSIT_MONEY)
-                .type(EType.DEBIT)
-                .ip(request.getLocalAddr())
-                .userAgent(request.getHeader("user-agent"))
-                .author(username)
+                .activity(request.getActivity())
+                .type(request.getType())
+                .ip(request.getHttpServletRequest().getLocalAddr())
+                .userAgent(request.getHttpServletRequest().getHeader("user-agent"))
+                .author(request.getAuthor())
                 .build();
         iBankBalanceHistoryDAO.save(bankBalanceHistory);
 
@@ -182,6 +202,7 @@ public class UserBalanceServiceImpl implements IUserBalanceService {
         bankBalance.setBalance(amountBankBalance);
         iBankBalanceDAO.save(bankBalance);
 
-        return userBalance;
+        return  userBalance;
     }
+
 }

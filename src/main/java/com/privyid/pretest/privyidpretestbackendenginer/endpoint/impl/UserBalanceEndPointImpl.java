@@ -5,6 +5,7 @@ import com.privyid.pretest.privyidpretestbackendenginer.dto.request.RequestTrans
 import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseDepositMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.endpoint.IUserBalanceEndPoint;
+import com.privyid.pretest.privyidpretestbackendenginer.entity.User;
 import com.privyid.pretest.privyidpretestbackendenginer.entity.UserBalance;
 import com.privyid.pretest.privyidpretestbackendenginer.service.IUserBalanceService;
 import com.privyid.pretest.privyidpretestbackendenginer.statval.EActivity;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,16 +28,19 @@ public class UserBalanceEndPointImpl implements IUserBalanceEndPoint {
     private final IUserBalanceService userBalanceService;
 
     @Override
-    public ResponseEntity<ResponseDepositMoneyDTO> depositMoney(@Valid RequestDepositMoneyDTO requestDepositMoneyDTO, HttpServletRequest request) throws Exception {
-        UserBalance result = userBalanceService.depositMoney(requestDepositMoneyDTO, requestDepositMoneyDTO.getUsername(), request);
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<ResponseDepositMoneyDTO> depositMoney(@Valid RequestDepositMoneyDTO requestDepositMoneyDTO, Authentication authentication, HttpServletRequest request) throws Exception {
+        User userDetails = (User) authentication.getPrincipal();
+        UserBalance result = userBalanceService.depositMoney(requestDepositMoneyDTO, userDetails.getUsername(), request);
         return ResponseEntity.ok(ResponseDepositMoneyDTO.builder()
-                .username(requestDepositMoneyDTO.getUsername())
+                .username(userDetails.getUsername())
                 .balance(result.getBalanceAchieve())
                 .depositMoney(requestDepositMoneyDTO.getAmount())
                 .activity(EActivity.DEPOSIT_MONEY).build());
     }
 
     @Override
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ResponseEntity<ResponseTransferMoneyDTO> transferMoney(@Valid RequestTransferMoneyDTO requestTransferMoneyDTO, HttpServletRequest request) throws Exception {
         return ResponseEntity.ok(userBalanceService.transferMoney(requestTransferMoneyDTO,  request));
     }

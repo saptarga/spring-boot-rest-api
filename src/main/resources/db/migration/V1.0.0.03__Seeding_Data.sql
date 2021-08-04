@@ -7,8 +7,8 @@ insert into "user" (username, email, "password") values ('dwi_asih', 'dwi_asih@g
 insert into "user" (username, email, "password") values ('sapta_arga', 'sapta_arga@gmail.com', '$2a$10$eM3YLt9AgTs99NtgbbrQX.5lHqTIvYYfLPMozp6WiOotJzD9IWqau');
 
 -- Seeding Data User Role
-insert into sec_user_roles (user_id, role_id) values (1, 2);
-insert into sec_user_roles (user_id, role_id) values (2, 2);
+insert into sec_user_roles (user_id, role_id) values (1, 1);
+insert into sec_user_roles (user_id, role_id) values (2, 1);
 
 -- Seeding Example Data User 1
 insert into "user_balance" (user_id , balance, balance_achieve) values (1, 50000, 50000);

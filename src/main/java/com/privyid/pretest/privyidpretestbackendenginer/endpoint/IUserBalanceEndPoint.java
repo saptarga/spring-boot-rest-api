@@ -6,6 +6,7 @@ import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseDep
 import com.privyid.pretest.privyidpretestbackendenginer.dto.response.ResponseTransferMoneyDTO;
 import com.privyid.pretest.privyidpretestbackendenginer.statval.IApplicationConstant;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ public interface IUserBalanceEndPoint {
 
     @PostMapping(IApplicationConstant.Path.UserBalance.DEPOSIT_MONEY)
     ResponseEntity<ResponseDepositMoneyDTO> depositMoney(@Valid @RequestBody RequestDepositMoneyDTO requestDepositMoneyDTO,
+                                                         Authentication authentication,
                                                          HttpServletRequest request) throws Exception;
 
     @PostMapping(IApplicationConstant.Path.UserBalance.TRANSFER_MONEY)
