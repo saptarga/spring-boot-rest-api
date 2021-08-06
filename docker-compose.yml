@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  api-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ${HOME}/log:/log
+    container_name: privyid-pretest-service
+    depends_on:
+      - postgresql-oauth-service
+    networks:
+      - internal
+    ports:
+      - 8080:8080
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-oauth-service:5432/privyid_pretest
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: pgadmin
+  postgresql-oauth-service:
+    image: postgres:9.6-alpine
+    container_name: postgresql-oauth-service
+    ports:
+      - 5432:5432
+    networks:
+      - internal
+    environment:
+      POSTGRES_DB: privyid_pretest
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pgadmin
+
+networks:
+  internal:
+    driver: bridge

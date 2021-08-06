@@ -49,6 +49,9 @@ You can start this project using
 mvn clean spring-boot:run
 ```
 
+## Docker Installation
+This project is support with docker. If you want to run this project using docker, you can run `start.sh` script. And for stop this project you can run `stop.sh` script.
+
 ## Example Request Rest API
 
 ### Login User
