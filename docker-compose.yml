@@ -15,7 +15,7 @@ services:
     ports:
       - 8080:8080
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-oauth-service:5432/privyid_pretest
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql-oauth-service:5432/rest_api
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: pgadmin
   postgresql-oauth-service:
@@ -26,7 +26,7 @@ services:
     networks:
       - internal
     environment:
-      POSTGRES_DB: privyid_pretest
+      POSTGRES_DB: rest_api
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pgadmin
 

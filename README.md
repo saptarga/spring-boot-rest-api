@@ -1,10 +1,10 @@
-# PRIVYID - PRETEST - BACKEND ENGINEER
+# SPRING BOOT - RESTFUL API - JWT AUTHENTICATION
 
 ## Description
-Simple project pretest backend engineer using Java Spring Boot and JWT Authentication
+Simple project restful api using Spring Boot and JWT Authentication
 
 ## Prerequisites
-- Java JDK 8
+- Java JDK 11
 - Database PostgreSql
 - Maven
 
@@ -12,7 +12,7 @@ Simple project pretest backend engineer using Java Spring Boot and JWT Authentic
 Step for installation:
 ```sh
 # Clone this project from gitlab
-git clone git@gitlab.com:saptarga/privyid-pretest.git
+git clone git@github.com:saptarga/spring-boot-rest-api.git
 
 # Clears the target directory and builds the project
 mvn clean install
@@ -39,7 +39,7 @@ mvn clean install
 ## Configuration
 Step for configuration:
 
-- Create new database in postgresql with database name `privyid_pretest`.
+- Create new database in postgresql with database name `rest_api`.
 - Set database name, user, and password in `application.properties`.
 - For db migration and seeding data will be created automatically when application running for first time.
 
@@ -166,7 +166,7 @@ Error message if you access API with inappropriate roles
 
 ## Client Http
 
-The example above can you try in `privy_pretest_client.http`
+The example above can you try in `client.http`
 
 ## Author 
 Created and maintained by saptarga ([@saptarga](https://www.linkedin.com/in/saptarga)).
